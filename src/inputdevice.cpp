@@ -5217,6 +5217,19 @@ static bool process_custom_event (struct uae_input_device *id, int offset, int s
 
 static void setbuttonstateall (struct uae_input_device *id, struct uae_input_device2 *id2, int button, int buttonstate)
 {
+	// HACK:Remap "left shoulder" button to "main fire" button, but with autofire suppressed
+	//
+	// Search for:
+	//              setid_af(uid, num, ID_BUTTON_OFFSET + 0 + function_offset, 0, port, thismap[n].south_action, af, gp);
+	//              setid(uid, num, ID_BUTTON_OFFSET + 4 + function_offset, 0, port, thismap[n].left_shoulder_action, gp);
+	//
+	bool suppressAutofire = false;
+	if (button == 4)
+	{
+		button = 0;
+		suppressAutofire = true;
+	}
+
 	static frame_time_t switchdevice_timeout;
 	int i;
 	uae_u32 mask = 1 << button;
@@ -5265,6 +5278,12 @@ static void setbuttonstateall (struct uae_input_device *id, struct uae_input_dev
 			TCHAR *custom = id->custom[ID_BUTTON_OFFSET + button][sub];
 			uae_u64 flags = flagsp[0];
 			int autofire = (flags & ID_FLAG_AUTOFIRE) ? 1 : 0;
+
+			if (suppressAutofire)
+			{
+				autofire = 0;
+			}
+
 			int toggle = (flags & ID_FLAG_TOGGLE) ? 1 : 0;
 			int inverttoggle = (flags & ID_FLAG_INVERTTOGGLE) ? 1 : 0;
 			int invert = (flags & ID_FLAG_INVERT) ? 1 : 0;
